@@ -9,7 +9,8 @@ export async function analyzeStockByTicker(
   chartImageBase64?: string
 ): Promise<{ analysis: AnalysisData | null; sources: NewsSource[] | null }> {
   try {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    let backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    if (!backendUrl.startsWith('http')) backendUrl = 'https://' + backendUrl;
     const response = await fetch(`${backendUrl}/api/analyze`, {
       method: 'POST',
       headers: {

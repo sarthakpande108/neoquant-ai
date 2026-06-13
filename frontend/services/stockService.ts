@@ -171,7 +171,8 @@ export async function fetchStockData(
     const fromStr = fromDate.toISOString().slice(0, 16).replace('T', ' ');
     const toStr = toDate.toISOString().slice(0, 16).replace('T', ' ');
     
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    let backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    if (!backendUrl.startsWith('http')) backendUrl = 'https://' + backendUrl;
     const [quoteRes, histRes] = await Promise.all([
       fetch(`${backendUrl}/api/quote/${ticker}`),
       fetch(`${backendUrl}/api/history/${ticker}?interval=${interval}&fromdate=${fromStr}&todate=${toStr}`)
@@ -224,7 +225,8 @@ export async function fetchStockData(
 export async function fetchQuote(ticker: string): Promise<StockQuote> {
   // 1. Try Angel One Backend First
   try {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    let backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    if (!backendUrl.startsWith('http')) backendUrl = 'https://' + backendUrl;
     const res = await fetch(`${backendUrl}/api/quote/${ticker}`);
     if (res.ok) {
       return await res.json();
