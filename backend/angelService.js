@@ -31,8 +31,8 @@ async function login() {
       sessionData = response.data;
       console.log("Angel One Login Successful");
     } else {
-      console.error("Login Failed:", response.message);
-      throw new Error(response.message);
+      console.error("Login Failed:", JSON.stringify(response));
+      throw new Error(response.message || "Unknown login error: " + JSON.stringify(response));
     }
   } catch (ex) {
     console.error("Exception during login:", ex.message || ex);

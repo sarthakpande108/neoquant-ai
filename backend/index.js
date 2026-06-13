@@ -16,8 +16,19 @@ app.use(express.json({ limit: '10mb' }));
 const PORT = process.env.PORT || 3001;
 
 let scripMaster = [];
+let isDownloadingScripMaster = false;
 
 async function downloadScripMaster() {
+  if (scripMaster.length > 0) return;
+  if (isDownloadingScripMaster) {
+    // Wait until another invocation finishes downloading
+    while (isDownloadingScripMaster) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return;
+  }
+  
+  isDownloadingScripMaster = true;
   try {
     console.log("Downloading Angel One Scrip Master (this may take a few seconds)...");
     const response = await axios.get("https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json");
@@ -25,14 +36,14 @@ async function downloadScripMaster() {
     console.log(`Scrip Master loaded with ${scripMaster.length} tokens.`);
   } catch (error) {
     console.error("Failed to download Scrip Master:", error.message);
+  } finally {
+    isDownloadingScripMaster = false;
   }
 }
 
-// Download once on startup
-downloadScripMaster();
-
 // Mapping logic
-function resolveSymbol(ticker) {
+async function resolveSymbol(ticker) {
+  await downloadScripMaster();
   if (!scripMaster || scripMaster.length === 0) return null;
 
   // 1. Handle MCX Commodities (e.g., GC=F -> GOLD)
@@ -98,7 +109,7 @@ function getNearestMCXContract(commodityName) {
 app.get('/api/quote/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol;
-    const angelSymbol = resolveSymbol(symbol);
+    const angelSymbol = await resolveSymbol(symbol);
     if (!angelSymbol) {
       return res.status(404).json({ error: "Symbol token mapping not found for " + symbol });
     }
@@ -135,7 +146,7 @@ app.get('/api/quote/:symbol', async (req, res) => {
 app.get('/api/history/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol;
-    const angelSymbol = resolveSymbol(symbol);
+    const angelSymbol = await resolveSymbol(symbol);
     if (!angelSymbol) {
       return res.status(404).json({ error: "Symbol token mapping not found" });
     }
