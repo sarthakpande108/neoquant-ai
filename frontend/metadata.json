@@ -1,0 +1,5 @@
+{
+  "name": "MarketWings",
+  "description": "Upload a stock chart screenshot, and let MarketWings analyze patterns, sentiment, and news to provide you with a data-driven trading signal.",
+  "requestFramePermissions": []
+}
