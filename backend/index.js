@@ -8,9 +8,7 @@ const fs = require('fs');
 
 const app = express();
 // Increase JSON limit to handle large base64 images for Gemini
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*'
-}));
+app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 const PORT = process.env.PORT || 3001;
