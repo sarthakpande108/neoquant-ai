@@ -196,3 +196,6 @@ app.post('/api/analyze', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Angel One Backend Server running on port ${PORT}`);
 });
+
+// Export the Express API for Vercel Serverless Functions
+module.exports = app;
