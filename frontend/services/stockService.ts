@@ -3,8 +3,8 @@ import { ALL_TICKERS } from './tickerData';
 
 const TIMEFRAME_CONFIG: Record<Timeframe, { interval: string; range: string }> = {
   '1H': { interval: '5m', range: '1d' },
-  '1D': { interval: '1d', range: '6mo' },
-  '1W': { interval: '1wk', range: '1y' },
+  '1D': { interval: '1d', range: '5y' },
+  '1W': { interval: '1wk', range: '5y' },
 };
 
 /**
@@ -167,6 +167,7 @@ export async function fetchStockData(
     if (range === '1d') fromDate.setDate(fromDate.getDate() - 2);
     else if (range === '6mo') fromDate.setMonth(fromDate.getMonth() - 6);
     else if (range === '1y') fromDate.setFullYear(fromDate.getFullYear() - 1);
+    else if (range === '5y') fromDate.setFullYear(fromDate.getFullYear() - 5);
     
     const fromStr = fromDate.toISOString().slice(0, 16).replace('T', ' ');
     const toStr = toDate.toISOString().slice(0, 16).replace('T', ' ');
