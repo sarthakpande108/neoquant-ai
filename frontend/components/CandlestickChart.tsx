@@ -267,6 +267,7 @@ export const CandlestickChart = forwardRef<CandlestickChartHandle, CandlestickCh
         width: entries[0].contentRect.width,
         height: entries[0].contentRect.height
       });
+      chart.timeScale().fitContent();
     });
     ro.observe(containerRef.current);
 

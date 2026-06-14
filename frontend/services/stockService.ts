@@ -298,26 +298,17 @@ export async function fetchMultipleQuotes(
 export async function searchTickers(query: string): Promise<import('../types').TickerInfo[]> {
   if (!query || query.trim().length < 2) return [];
   
-  const url = `/api/yahoo/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0`;
   try {
-    const response = await fetch(url);
+    let backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    if (!backendUrl.startsWith('http')) backendUrl = 'https://' + backendUrl;
+    
+    const response = await fetch(`${backendUrl}/api/search?q=${encodeURIComponent(query)}`);
     if (!response.ok) return [];
     
     const data = await response.json();
-    const quotes = data.quotes || [];
-    
-    // Map Yahoo quote to our TickerInfo
-    return quotes
-      .filter((q: any) => q.quoteType === 'EQUITY' || q.quoteType === 'ETF' || q.quoteType === 'INDEX')
-      .map((q: any) => ({
-        symbol: q.symbol,
-        name: q.longname || q.shortname || q.symbol,
-        exchange: getExchange(q.symbol),
-        type: q.quoteType,
-        sector: q.sectorDisp || q.industryDisp || 'Unknown'
-      }));
+    return data;
   } catch (err) {
-    console.error('Yahoo Finance search error:', err);
+    console.error('Angel One search error:', err);
     return [];
   }
 }

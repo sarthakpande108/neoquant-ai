@@ -240,6 +240,71 @@ app.post('/api/chat-screener', async (req, res) => {
   }
 });
 
+app.get('/api/search', async (req, res) => {
+  try {
+    const q = (req.query.q || '').toLowerCase();
+    if (q.length < 2) return res.json([]);
+
+    await downloadScripMaster();
+
+    const results = [];
+    for (let i = 0; i < scripMaster.length; i++) {
+      const s = scripMaster[i];
+      
+      // Filter out options/futures noise to keep search clean (mostly equities & indices)
+      if (s.exch_seg === 'NSE') {
+        if (!s.symbol.endsWith('-EQ') && !s.symbol.endsWith('-BE') && !s.instrumenttype.includes('IDX')) continue;
+      } else if (s.exch_seg === 'BSE') {
+        if (s.expiry && s.expiry !== '') continue; // Skip derivatives
+      } else if (s.exch_seg !== 'MCX') {
+        continue; // Skip NFO, CDS, etc.
+      }
+
+      const sym = s.symbol.toLowerCase();
+      const name = s.name.toLowerCase();
+
+      // Exact prefix matches
+      if (sym.startsWith(q) || name.startsWith(q) || sym.includes(q) || name.includes(q)) {
+        results.push(s);
+        if (results.length >= 30) break; // limit to 30
+      }
+    }
+
+    // Map to frontend format
+    const mapped = results.map(s => {
+      let tickerSymbol = s.symbol;
+      let type = 'EQUITY';
+
+      if (s.exch_seg === 'NSE') {
+        if (tickerSymbol.endsWith('-EQ') || tickerSymbol.endsWith('-BE')) {
+          tickerSymbol = tickerSymbol.split('-')[0] + '.NS';
+        } else {
+          type = 'INDEX';
+          tickerSymbol = '^' + tickerSymbol;
+        }
+      } else if (s.exch_seg === 'BSE') {
+        tickerSymbol = tickerSymbol + '.BO';
+      } else if (s.exch_seg === 'MCX') {
+        type = 'COMMODITY';
+        tickerSymbol = tickerSymbol + '.MCX';
+      }
+
+      return {
+        symbol: tickerSymbol,
+        name: s.name,
+        exchange: s.exch_seg,
+        type: type,
+        sector: 'Unknown'
+      };
+    });
+
+    res.json(mapped);
+  } catch (error) {
+    console.error("Search error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Angel One Backend Server running on port ${PORT}`);
 });
