@@ -12,6 +12,8 @@ import { HistoryPanel } from './components/HistoryPanel';
 import { Loader } from './components/Loader';
 import { Footer } from './components/Footer';
 import { AboutPage } from './components/AboutPage';
+import { ScreenerChat } from './components/ScreenerChat';
+import { TradeSignalPanel } from './components/TradeSignalPanel';
 import { analyzeStockByTicker } from './services/geminiService';
 import { fetchStockData, fetchMultipleQuotes } from './services/stockService';
 import { computeAllIndicators, getLatestRSI, formatIndicatorsForAI } from './services/indicatorService';
@@ -19,7 +21,7 @@ import { getCachedAnalysis, setCachedAnalysis } from './services/cacheService';
 import { ALL_TICKERS, TAPE_TICKERS } from './services/tickerData';
 import type {
   TickerInfo, StockQuote, Candle, AnalysisData, NewsSource,
-  WatchlistItem, HistoryEntry, TechnicalIndicators, IndicatorToggles, Timeframe
+  WatchlistItem, HistoryEntry, TechnicalIndicators, IndicatorToggles, Timeframe, TradeSignal
 } from './types';
 
 const WATCHLIST_KEY = 'marketwings_watchlist';
@@ -84,7 +86,7 @@ function computeMarketStatus(): 'OPEN' | 'CLOSED' | 'PRE' {
 }
 
 function App() {
-  const [page, setPage] = useState<'home' | 'about'>('home');
+  const [page, setPage] = useState<'home' | 'about' | 'screener'>('home');
 
   // Market state
   const [marketStatus, setMarketStatus] = useState<'OPEN' | 'CLOSED' | 'PRE'>(computeMarketStatus());
@@ -110,6 +112,8 @@ function App() {
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [sources, setSources] = useState<NewsSource[] | null>(null);
   const [includeWebNews, setIncludeWebNews] = useState(false);
+  const [tradeSignal, setTradeSignal] = useState<TradeSignal | null>(null);
+  const [isLoadingSignal, setIsLoadingSignal] = useState(false);
 
   // Sidebar state
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(loadWatchlist);
@@ -172,6 +176,7 @@ function App() {
     setQuote(null);
     setAnalysis(null);
     setSources(null);
+    setTradeSignal(null);
     setAnalysisError(null);
 
     try {
@@ -258,7 +263,41 @@ function App() {
     } finally {
       setIsLoadingAnalysis(false);
     }
-  }, [currentTicker, quote, candles]);
+  }, [currentTicker, quote, candles, includeWebNews, timeframe]);
+
+  const handleGenerateSignal = useCallback(async () => {
+    if (!currentTicker || !quote || candles.length === 0) return;
+    setIsLoadingSignal(true);
+    setTradeSignal(null);
+
+    try {
+      const indicatorSummary = formatIndicatorsForAI(candles, quote);
+      const chartImage = chartComponentRef.current?.getScreenshot() || undefined;
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+
+      const response = await fetch(`${backendUrl}/api/signal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker: currentTicker.symbol,
+          indicatorSummary,
+          quote,
+          timeframe,
+          chartImageBase64: chartImage
+        })
+      });
+
+      if (!response.ok) throw new Error('Signal generation failed');
+      const data = await response.json();
+      setTradeSignal(data);
+      setTimeout(() => analysisRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to generate trade signal.");
+    } finally {
+      setIsLoadingSignal(false);
+    }
+  }, [currentTicker, quote, candles, timeframe]);
 
   const handleAddToWatchlist = useCallback(() => {
     if (!currentTicker) return;
@@ -387,6 +426,14 @@ function App() {
                         </span>
                       ) : '🤖 Run NeoQuant'}
                     </button>
+
+                    <button
+                      onClick={handleGenerateSignal}
+                      disabled={isLoadingSignal || isLoadingChart || candles.length === 0}
+                      className="px-4 py-1.5 text-xs sm:text-sm uppercase bg-black text-white neo-btn flex items-center gap-2"
+                    >
+                      {isLoadingSignal ? 'Generating...' : '🔥 Trade Setup'}
+                    </button>
                   </div>
                 </div>
               )}
@@ -458,8 +505,9 @@ function App() {
 
               {/* Analysis Result */}
               {analysis && quote && (
-                <div ref={analysisRef}>
+                <div ref={analysisRef} className="space-y-4">
                   <AnalysisResult result={analysis} sources={sources} quote={quote} />
+                  {tradeSignal && <TradeSignalPanel signal={tradeSignal} />}
                 </div>
               )}
 
@@ -533,6 +581,13 @@ function App() {
               )}
             </div>
           </div>
+        )}
+
+        {page === 'screener' && (
+          <ScreenerChat onSelectTicker={(t) => {
+            setPage('home');
+            handleSelectTicker(t);
+          }} />
         )}
 
         {/* Mobile sidebar panels */}

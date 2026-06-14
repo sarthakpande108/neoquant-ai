@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-type Page = 'home' | 'about';
+type Page = 'home' | 'about' | 'screener';
 type MarketStatus = 'OPEN' | 'CLOSED' | 'PRE';
 
 interface HeaderProps {
@@ -211,6 +211,12 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, setPage, marketStat
             className={navLinkClasses('home')}
           >
             Analyzer
+          </button>
+          <button
+            onClick={() => setPage('screener')}
+            className={navLinkClasses('screener')}
+          >
+            Screener Chat
           </button>
           <button
             onClick={() => setPage('about')}

@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const { getQuote, getCandleData } = require('./angelService');
-const { analyzeStockByTicker } = require('./geminiService');
+const { analyzeStockByTicker, generateTradeSignal, screenStocksChat } = require('./geminiService');
 const axios = require('axios');
 const fs = require('fs');
 
@@ -195,6 +195,44 @@ app.post('/api/analyze', async (req, res) => {
       includeWebNews,
       chartImageBase64
     );
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/signal', async (req, res) => {
+  try {
+    const { ticker, indicatorSummary, quote, timeframe, chartImageBase64 } = req.body;
+    
+    if (!ticker || !quote) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const result = await generateTradeSignal(
+      ticker,
+      indicatorSummary,
+      quote,
+      timeframe,
+      chartImageBase64
+    );
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/chat-screener', async (req, res) => {
+  try {
+    const { query, chatHistory, allTickersString } = req.body;
+    
+    if (!query || !allTickersString) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const result = await screenStocksChat(query, chatHistory || [], allTickersString);
 
     res.json(result);
   } catch (error) {

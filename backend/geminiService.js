@@ -156,6 +156,115 @@ Return your complete analysis as a **raw JSON object only** (no markdown, no cod
   }
 }
 
+async function generateTradeSignal(ticker, indicatorSummary, quote, timeframe, chartImageBase64) {
+  if (!ai) throw new Error("Gemini API key not configured on the backend.");
+
+  const currencySymbol = quote.currency === 'INR' ? '₹' : '$';
+  
+  const prompt = `You are a ruthless, highly accurate algorithmic trader. Your job is to output a STRICT, actionable trade setup based on the provided technicals and chart. Do not give generic advice.
+
+**Stock**: ${ticker} | ${quote.name}
+**Price**: ${currencySymbol}${quote.price.toFixed(2)}
+**Timeframe**: ${timeframe}
+
+**Technicals**:
+${indicatorSummary}
+
+Task: Generate a high-probability trade signal (Buy, Sell, or Hold). Provide precise levels.
+Return ONLY raw JSON in this exact format:
+{
+  "action": "BUY" | "SELL" | "HOLD",
+  "entryPrice": "Exact price or range",
+  "target1": "Conservative target",
+  "target2": "Aggressive target",
+  "stopLoss": "Strict stop loss price",
+  "riskReward": "Ratio e.g., 1:2.5",
+  "catalyst": "A brutal, 1-sentence technical reason for this setup."
+}`;
+
+  try {
+    const parts = [{ text: prompt }];
+    if (chartImageBase64) {
+      parts.push({
+        inlineData: {
+          mimeType: "image/png",
+          data: chartImageBase64.replace(/^data:image\/\w+;base64,/, ''),
+        }
+      });
+    }
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: { parts }
+    });
+
+    let jsonStr = response.text.trim();
+    const match = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (match && match[1]) jsonStr = match[1];
+    
+    const jsonStart = jsonStr.indexOf('{');
+    const jsonEnd = jsonStr.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      jsonStr = jsonStr.slice(jsonStart, jsonEnd + 1);
+    }
+
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error("Error generating trade signal:", error);
+    throw new Error("Failed to generate trade signal.");
+  }
+}
+
+async function screenStocksChat(query, chatHistory, allTickersString) {
+  if (!ai) throw new Error("Gemini API key not configured on the backend.");
+
+  const prompt = `You are NeoQuant, an elite AI Stock Screener chatbot.
+The user is asking you to find stocks based on natural language criteria.
+
+You have access to the following universe of tickers:
+${allTickersString}
+
+**Chat History**:
+${chatHistory.map(msg => `${msg.role === 'user' ? 'User' : 'NeoQuant'}: ${msg.content}`).join('\n')}
+
+**New Query**: ${query}
+
+Task:
+1. Analyze the user's query and the chat history.
+2. Formulate a short, brutalist, and professional text response as NeoQuant.
+3. Identify 1 to 5 ticker symbols from the provided universe that BEST match the user's criteria.
+
+Return ONLY raw JSON in this exact format:
+{
+  "text": "Your conversational response as NeoQuant.",
+  "matchedTickers": ["RELIANCE.NS", "TCS.NS"] 
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+
+    let jsonStr = response.text.trim();
+    const match = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (match && match[1]) jsonStr = match[1];
+    
+    const jsonStart = jsonStr.indexOf('{');
+    const jsonEnd = jsonStr.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      jsonStr = jsonStr.slice(jsonStart, jsonEnd + 1);
+    }
+
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error("Error in screener chat:", error);
+    throw new Error("Failed to screen stocks.");
+  }
+}
+
 module.exports = {
-  analyzeStockByTicker
+  analyzeStockByTicker,
+  generateTradeSignal,
+  screenStocksChat
 };

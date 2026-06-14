@@ -98,11 +98,21 @@ export interface HistoryEntry {
   id: string;
   ticker: string;
   name: string;
-  exchange: Exchange;
+  exchange: string;
   analysedAt: number;
-  recommendation: Recommendation;
+  recommendation: 'Buy' | 'Hold' | 'Sell';
   confidence: number;
   price: number;
+}
+
+export interface TradeSignal {
+  action: 'BUY' | 'SELL' | 'HOLD';
+  entryPrice: string;
+  target1: string;
+  target2: string;
+  stopLoss: string;
+  riskReward: string;
+  catalyst: string;
 }
 
 // Ticker search result
