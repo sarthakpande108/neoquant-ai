@@ -185,7 +185,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, setPage, marketStat
     <header
       className="sticky top-0 z-40 bg-white border-b-[3px] border-black"
     >
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div className="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
         {/* ── Left: Logo + Title ─────────────────────────────────────────── */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <WingsIcon />

@@ -433,18 +433,17 @@ export const CandlestickChart = forwardRef<CandlestickChartHandle, CandlestickCh
         isFullscreen ? 'fixed inset-0 z-50 w-screen h-screen rounded-none border-none' : 'neo-card-flat'
       }`}
     >
-      {/* ── Header bar ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b-[3px] border-black bg-neo-yellow">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 pt-3 pb-2 border-b-[3px] border-black bg-neo-yellow gap-2 sm:gap-0">
         {/* Ticker label */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-black text-black uppercase font-mono-num">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-black text-black uppercase font-mono-num break-all">
             {ticker || '—'}
           </span>
-          <span className="text-xs text-black font-bold uppercase">Candlestick</span>
+          <span className="text-xs text-black font-bold uppercase whitespace-nowrap">Candlestick</span>
         </div>
 
         {/* Right: update time + timeframe tabs */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Last update */}
           {lastTime > 0 && (
             <span className="text-[0.65rem] text-black font-bold hidden sm:inline uppercase">
@@ -509,7 +508,7 @@ export const CandlestickChart = forwardRef<CandlestickChartHandle, CandlestickCh
         <div ref={containerRef} className={`w-full relative ${isFullscreen ? 'h-full' : 'h-[380px]'}`} />
 
         {/* Zoom Controls Overlay */}
-        <div className="absolute top-4 right-14 z-10 flex items-center gap-1 bg-white border-[3px] border-black p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+        <div className="absolute top-4 right-14 z-10 hidden sm:flex items-center gap-1 bg-white border-[3px] border-black p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <button
             onClick={handleZoomIn}
             className="w-7 h-7 flex items-center justify-center text-black hover:bg-black hover:text-white transition-colors border-2 border-transparent hover:border-black"
