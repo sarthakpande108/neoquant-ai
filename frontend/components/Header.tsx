@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-type Page = 'home' | 'about' | 'screener';
+type Page = 'home' | 'about';
 type MarketStatus = 'OPEN' | 'CLOSED' | 'PRE';
 
 interface HeaderProps {
@@ -204,19 +204,12 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, setPage, marketStat
           <MarketStatusBadge status={status} istTime={istTime} />
         </div>
 
-        {/* ── Right: Nav Links ───────────────────────────────────────────── */}
         <nav className="flex items-center gap-1 flex-shrink-0">
           <button
             onClick={() => setPage('home')}
             className={navLinkClasses('home')}
           >
             Analyzer
-          </button>
-          <button
-            onClick={() => setPage('screener')}
-            className={navLinkClasses('screener')}
-          >
-            Screener Chat
           </button>
           <button
             onClick={() => setPage('about')}

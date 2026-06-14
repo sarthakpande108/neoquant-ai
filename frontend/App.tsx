@@ -86,7 +86,7 @@ function computeMarketStatus(): 'OPEN' | 'CLOSED' | 'PRE' {
 }
 
 function App() {
-  const [page, setPage] = useState<'home' | 'about' | 'screener'>('home');
+  const [page, setPage] = useState<'home' | 'about'>('home');
 
   // Market state
   const [marketStatus, setMarketStatus] = useState<'OPEN' | 'CLOSED' | 'PRE'>(computeMarketStatus());
@@ -123,7 +123,7 @@ function App() {
 
   // Panel visibility on mobile
   const [showSidebar, setShowSidebar] = useState(true);
-  const [activeSidePanel, setActiveSidePanel] = useState<'watchlist' | 'heatmap' | 'history'>('watchlist');
+  const [activeSidePanel, setActiveSidePanel] = useState<'watchlist' | 'heatmap' | 'history' | 'screener'>('watchlist');
 
   const analysisRef = useRef<HTMLDivElement>(null);
   const chartComponentRef = useRef<CandlestickChartHandle>(null);
@@ -545,17 +545,17 @@ function App() {
             <div className="hidden lg:flex flex-col gap-4 w-72 xl:w-80 flex-shrink-0">
               {/* Sidebar Tabs */}
               <div className="flex neo-card-flat bg-white overflow-hidden p-1 gap-1">
-                {(['watchlist', 'heatmap', 'history'] as const).map(panel => (
+                {(['watchlist', 'screener', 'heatmap', 'history'] as const).map(panel => (
                   <button
                     key={panel}
                     onClick={() => setActiveSidePanel(panel)}
-                    className={`flex-1 py-2 rounded border-2 text-xs font-bold uppercase transition-all ${
+                    className={`flex-1 py-2 rounded border-2 text-[10px] sm:text-xs font-bold uppercase transition-all ${
                       activeSidePanel === panel
                         ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                         : 'bg-white text-slate-500 border-transparent hover:text-black hover:border-black'
                     }`}
                   >
-                    {panel === 'watchlist' ? '⭐ Watchlist' : panel === 'heatmap' ? '🔥 Sectors' : '🕒 History'}
+                    {panel === 'watchlist' ? '⭐ Watch' : panel === 'screener' ? '🤖 Screen' : panel === 'heatmap' ? '🔥 Sectors' : '🕒 History'}
                   </button>
                 ))}
               </div>
@@ -568,6 +568,9 @@ function App() {
                   onRemove={handleRemoveFromWatchlist}
                   currentTicker={currentTicker?.symbol ?? null}
                 />
+              )}
+              {activeSidePanel === 'screener' && (
+                <ScreenerChat onSelectTicker={handleSelectTicker} />
               )}
               {activeSidePanel === 'heatmap' && (
                 <SectorHeatmap onSectorClick={handleSectorClick} />
@@ -583,24 +586,47 @@ function App() {
           </div>
         )}
 
-        {page === 'screener' && (
-          <ScreenerChat onSelectTicker={(t) => {
-            setPage('home');
-            handleSelectTicker(t);
-          }} />
-        )}
-
         {/* Mobile sidebar panels */}
         {page === 'home' && (
           <div className="lg:hidden mt-4 grid grid-cols-1 gap-4">
-            <SectorHeatmap onSectorClick={handleSectorClick} />
-            <Watchlist
-              watchlist={watchlist}
-              quotes={watchlistQuotes}
-              onSelectTicker={handleSelectTicker}
-              onRemove={handleRemoveFromWatchlist}
-              currentTicker={currentTicker?.symbol ?? null}
-            />
+            <div className="flex neo-card-flat bg-white overflow-hidden p-1 gap-1">
+              {(['watchlist', 'screener', 'heatmap', 'history'] as const).map(panel => (
+                <button
+                  key={panel}
+                  onClick={() => setActiveSidePanel(panel)}
+                  className={`flex-1 py-2 rounded border-2 text-[10px] sm:text-xs font-bold uppercase transition-all ${
+                    activeSidePanel === panel
+                      ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                      : 'bg-white text-slate-500 border-transparent hover:text-black hover:border-black'
+                  }`}
+                >
+                  {panel === 'watchlist' ? '⭐ Watch' : panel === 'screener' ? '🤖 Screen' : panel === 'heatmap' ? '🔥 Sectors' : '🕒 History'}
+                </button>
+              ))}
+            </div>
+
+            {activeSidePanel === 'watchlist' && (
+              <Watchlist
+                watchlist={watchlist}
+                quotes={watchlistQuotes}
+                onSelectTicker={handleSelectTicker}
+                onRemove={handleRemoveFromWatchlist}
+                currentTicker={currentTicker?.symbol ?? null}
+              />
+            )}
+            {activeSidePanel === 'screener' && (
+              <ScreenerChat onSelectTicker={handleSelectTicker} />
+            )}
+            {activeSidePanel === 'heatmap' && (
+              <SectorHeatmap onSectorClick={handleSectorClick} />
+            )}
+            {activeSidePanel === 'history' && (
+              <HistoryPanel
+                history={history}
+                onSelectEntry={handleHistorySelect}
+                onClear={() => { setHistory([]); saveHistory([]); }}
+              />
+            )}
           </div>
         )}
       </main>

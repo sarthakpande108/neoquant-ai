@@ -87,7 +87,7 @@ export const ScreenerChat: React.FC<Props> = ({ onSelectTicker }) => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto h-[calc(100vh-140px)] flex flex-col neo-card overflow-hidden bg-slate-50">
+    <div className="w-full h-[600px] flex flex-col neo-card-flat bg-slate-50 border-2 border-black overflow-hidden">
       {/* Header */}
       <div className="bg-neo-purple border-b-[3px] border-black p-4 flex items-center gap-3 shrink-0">
         <div className="w-10 h-10 rounded-full border-2 border-black bg-white flex items-center justify-center font-black text-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
